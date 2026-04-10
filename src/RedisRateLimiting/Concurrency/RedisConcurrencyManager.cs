@@ -18,8 +18,7 @@ internal class RedisConcurrencyManager
             local queue_limit = tonumber(@queue_limit)
             local try_enqueue = tonumber(@try_enqueue)
             local timestamp = tonumber(@current_time)
-            -- max milliseconds it takes to complete a request
-            local ttl = 60000
+            local ttl = tonumber(@ttl)
 
             redis.call(""zremrangebyscore"", @rate_limit_key, '-inf', timestamp - ttl)
 
@@ -132,6 +131,7 @@ internal class RedisConcurrencyManager
                 queue_limit = (RedisValue)_options.QueueLimit,
                 current_time = (RedisValue)unixTimeMilliseconds,
                 unique_id = (RedisValue)requestId,
+                ttl = (RedisValue)(long)_options.ExpectedRequestTimeout.TotalMilliseconds,
             });
 
         var result = new RedisConcurrencyResponse();
@@ -165,6 +165,7 @@ internal class RedisConcurrencyManager
                 queue_limit = (RedisValue)_options.QueueLimit,
                 current_time = (RedisValue)unixTimeMilliseconds,
                 unique_id = (RedisValue)requestId,
+                ttl = (RedisValue)(long)_options.ExpectedRequestTimeout.TotalMilliseconds,
             });
 
         var result = new RedisConcurrencyResponse();

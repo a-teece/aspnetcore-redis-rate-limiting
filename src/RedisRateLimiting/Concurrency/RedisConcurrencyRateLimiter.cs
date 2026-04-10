@@ -44,6 +44,10 @@ public class RedisConcurrencyRateLimiter<TKey> : RateLimiter
         {
             throw new ArgumentException(string.Format("{0} must not be null.", nameof(options.ConnectionMultiplexerFactory)), nameof(options));
         }
+        if (options.ExpectedRequestTimeout <= TimeSpan.Zero)
+        {
+            throw new ArgumentException(string.Format("{0} must be set to a value greater than TimeSpan.Zero.", nameof(options.ExpectedRequestTimeout)), nameof(options));
+        }
 
         _options = new RedisConcurrencyRateLimiterOptions
         {
@@ -51,6 +55,7 @@ public class RedisConcurrencyRateLimiter<TKey> : RateLimiter
             PermitLimit = options.PermitLimit,
             QueueLimit = options.QueueLimit,
             TryDequeuePeriod = options.TryDequeuePeriod,
+            ExpectedRequestTimeout = options.ExpectedRequestTimeout,
         };
 
         _redisManager = new RedisConcurrencyManager(partitionKey?.ToString() ?? string.Empty, _options);

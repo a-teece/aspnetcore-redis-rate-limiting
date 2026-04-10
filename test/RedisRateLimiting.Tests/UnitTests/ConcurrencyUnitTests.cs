@@ -35,6 +35,24 @@ public class ConcurrencyUnitTests(TestFixture fixture) : IClassFixture<TestFixtu
                 PermitLimit = 1,
                 ConnectionMultiplexerFactory = null,
             }));
+
+        AssertExtensions.Throws<ArgumentException>("options", () => new RedisConcurrencyRateLimiter<string>(
+            string.Empty,
+            new RedisConcurrencyRateLimiterOptions
+            {
+                PermitLimit = 1,
+                ConnectionMultiplexerFactory = Fixture.ConnectionMultiplexerFactory,
+                ExpectedRequestTimeout = TimeSpan.Zero,
+            }));
+
+        AssertExtensions.Throws<ArgumentException>("options", () => new RedisConcurrencyRateLimiter<string>(
+            string.Empty,
+            new RedisConcurrencyRateLimiterOptions
+            {
+                PermitLimit = 1,
+                ConnectionMultiplexerFactory = Fixture.ConnectionMultiplexerFactory,
+                ExpectedRequestTimeout = TimeSpan.FromSeconds(-1),
+            }));
     }
 
     [Fact]
@@ -50,6 +68,30 @@ public class ConcurrencyUnitTests(TestFixture fixture) : IClassFixture<TestFixtu
             });
         var ex = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () => await limiter.AcquireAsync(2));
         Assert.Equal("permitCount", ex.ParamName);
+    }
+
+    [Fact]
+    public async Task CanAcquireAsyncResourceWithCustomTimeout()
+    {
+        using var limiter = new RedisConcurrencyRateLimiter<string>(
+            partitionKey: Guid.NewGuid().ToString(),
+            new RedisConcurrencyRateLimiterOptions
+            {
+                PermitLimit = 1,
+                ConnectionMultiplexerFactory = Fixture.ConnectionMultiplexerFactory,
+                ExpectedRequestTimeout = TimeSpan.FromMinutes(5),
+            });
+
+        var lease = await limiter.AcquireAsync();
+        Assert.True(lease.IsAcquired);
+
+        var lease2 = await limiter.AcquireAsync();
+        Assert.False(lease2.IsAcquired);
+
+        lease.Dispose();
+
+        lease = await limiter.AcquireAsync();
+        Assert.True(lease.IsAcquired);
     }
 
     [Fact]
@@ -339,7 +381,7 @@ public class ConcurrencyUnitTests(TestFixture fixture) : IClassFixture<TestFixtu
         using var lease3 = await wait3;
         Assert.True(lease3.IsAcquired);
     }
-    
+
     [Fact]
     public async Task IdleDurationIsUpdated()
     {
