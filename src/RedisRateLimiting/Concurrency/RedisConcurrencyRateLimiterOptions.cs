@@ -24,4 +24,12 @@ public sealed class RedisConcurrencyRateLimiterOptions : RedisRateLimiterOptions
     /// Must be set to a value greater than <see cref="TimeSpan.Zero" /> by the time these options are passed to the constructor of <see cref="RedisConcurrencyRateLimiter{TKey}"/>.
     /// </summary>
     public TimeSpan TryDequeuePeriod { get; set; } = TimeSpan.FromSeconds(1);
+
+    /// <summary>
+    /// Maximum expected duration of a single request.
+    /// Permits that exceed this duration will be considered expired and automatically reclaimed.
+    /// Must be set to a value greater than <see cref="TimeSpan.Zero" />.
+    /// Defaults to 60 seconds.
+    /// </summary>
+    public TimeSpan ExpectedRequestTimeout { get; set; } = TimeSpan.FromSeconds(60);
 }
