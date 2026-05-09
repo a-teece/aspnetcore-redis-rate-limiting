@@ -255,6 +255,8 @@ public class RedisConcurrencyRateLimiter<TKey> : RateLimiter
             request?.TaskCompletionSource?.TrySetResult(FailedLease);
         }
 
+        _redisManager?.Dispose();
+
         base.Dispose(disposing);
     }
 

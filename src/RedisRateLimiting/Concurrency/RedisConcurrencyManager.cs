@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace RedisRateLimiting.Concurrency;
 
-internal class RedisConcurrencyManager
+internal class RedisConcurrencyManager : IDisposable
 {
     private readonly IConnectionMultiplexer _connectionMultiplexer;
     private readonly RedisConcurrencyRateLimiterOptions _options;
@@ -101,6 +101,7 @@ internal class RedisConcurrencyManager
             local total_failed_count = redis.call(""hget"", @stats_key, 'total_failed')
 
             return { count, queue_count, total_successful_count, total_failed_count }");
+    private bool disposedValue;
 
     public RedisConcurrencyManager(
         string partitionKey,
@@ -252,6 +253,26 @@ internal class RedisConcurrencyManager
             TotalSuccessfulLeases = (long)response[2],
             TotalFailedLeases = (long)response[3],
         };
+    }
+
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposedValue)
+        {
+            if (disposing)
+            {
+                _connectionMultiplexer?.Dispose();
+            }
+
+            disposedValue = true;
+        }
+    }
+
+    public void Dispose()
+    {
+        // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
     }
 }
 
