@@ -1,4 +1,5 @@
 ﻿using RedisRateLimiting.Concurrency;
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -52,6 +53,11 @@ public class RedisSlidingWindowRateLimiter<TKey> : RateLimiter
     public override RateLimiterStatistics? GetStatistics()
     {
         return _redisManager.GetStatistics();
+    }
+
+    public async Task<RateLimiterStatistics?> GetStatisticsAsync()
+    {
+        return await _redisManager.GetStatisticsAsync();
     }
 
     protected override async ValueTask<RateLimitLease> AcquireAsyncCore(int permitCount, CancellationToken cancellationToken)

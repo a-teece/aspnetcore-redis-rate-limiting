@@ -1,4 +1,5 @@
 ﻿using RedisRateLimiting.Concurrency;
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -71,6 +72,11 @@ public class RedisConcurrencyRateLimiter<TKey> : RateLimiter
     public override RateLimiterStatistics? GetStatistics()
     {
         return _redisManager.GetStatistics();
+    }
+
+    public async Task<RateLimiterStatistics?> GetStatisticsAsync()
+    {
+        return await _redisManager.GetStatisticsAsync();
     }
 
     protected override async ValueTask<RateLimitLease> AcquireAsyncCore(int permitCount, CancellationToken cancellationToken)
@@ -146,7 +152,8 @@ public class RedisConcurrencyRateLimiter<TKey> : RateLimiter
 
     private void Release(ConcurencyLeaseContext leaseContext)
     {
-        if (leaseContext.RequestId is null) return;
+        if (leaseContext.RequestId is null)
+            return;
 
         _ = _redisManager.ReleaseLeaseAsync(leaseContext.RequestId);
     }

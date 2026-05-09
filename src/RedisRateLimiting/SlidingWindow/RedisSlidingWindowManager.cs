@@ -1,4 +1,5 @@
 ﻿using StackExchange.Redis;
+
 using System;
 using System.Threading.RateLimiting;
 using System.Threading.Tasks;
@@ -125,6 +126,31 @@ internal class RedisSlidingWindowManager
         var database = _connectionMultiplexer.GetDatabase();
 
         var response = (RedisValue[]?)database.ScriptEvaluate(
+            StatisticsScript,
+            new
+            {
+                rate_limit_key = RateLimitKey,
+                stats_key = StatsRateLimitKey,
+            });
+
+        if (response == null)
+        {
+            return null;
+        }
+
+        return new RateLimiterStatistics
+        {
+            CurrentAvailablePermits = _options.PermitLimit - (long)response[0],
+            TotalSuccessfulLeases = (long)response[1],
+            TotalFailedLeases = (long)response[2],
+        };
+    }
+
+    internal async Task<RateLimiterStatistics?> GetStatisticsAsync()
+    {
+        var database = _connectionMultiplexer.GetDatabase();
+
+        var response = (RedisValue[]?)await database.ScriptEvaluateAsync(
             StatisticsScript,
             new
             {
